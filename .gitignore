@@ -1,0 +1,6 @@
+.env
+nodemodules/
+# Logs
+logs/
+npm-debug.log*
+# Runtime data

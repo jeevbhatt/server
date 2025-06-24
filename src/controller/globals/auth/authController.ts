@@ -1,115 +1,169 @@
-/*class authController {
-  async regUser() {
-    // Registration/SignUp logic(incoming data validation, user creation, etc.)
-    //User name, email, password
-    //processing/checking the incoming data, validating it, and creating a new user
-    //phone number, email, password, etc.
-    //dbquery to create a new user
-    //hashing the password before saving it to the database
-  }
+/*
 
-  async loginUser() {
-    // Login logic
-  }
+REGISTER/SIGNUP
+incoming data  --> username, email, password
+processing/checking --> email valid, compulsory data aaaunu paryo
+db--> table--> query --> table ma insert/read/delete/update
 
-  async logoutUser() {
-    // Logout logic
-  }
-  async forgetPassword() {
-    // Forget password logic
-  }
-  async resetPassword() {
-    // Reset password logic
-  }
+LOGIN/SIGNIN
+LOGOUT
+FORGOT PASSWORD
+RESET PASSWORD/ OTP
 
-}
 */
-import { Request, Response } from 'express';
-import User from '../../../database/models/userModel'; // Adjust the import path as necessary
-import bcrypt from 'bcrypt'; // Import bcrypt for password hashing
-import jwt from 'jsonwebtoken'; // Import jwt for token generation (if needed)
-/*const registerUser = async (req: Request, res: Response) => {
- const { username, email, password } = req.body;
- // Here you would typically validate the input, hash the password,
- if (!username || !email || !password) {
-   return res.status(400).json({ message: 'All fields are required' });
- }
- else {
-   await User.create({
-     username,
-     email,
-     password
-   })
-     .then(() => {
-       res.status(201).json({ message: 'User registered successfully' });
+// json data --> req.body // username,email,password
+// files --> req.file // files
+// const registerUser = async (req:Request,res:Response)=>{
+// //    const username = req.body.username
+// //    const password = req.body.password
+// //    const email = req.body.email
+//     // incoming data --> accept
+//    const {username,password,email} = req.body
+//    if(!username || !password || !email){
+//      res.status(400).json({
+//         message : "Please provide username, password, email"
+//     })
+//     return
+//    }
+//     // insert into Users table
+//     await User.create({
+//         username :username,
+//         password : password,
+//         email : email
+//     })
+//     res.status(200).json({
+//         message : "User registered successfully"
+//     })
+
+
+// } // function
+// BOLA Attack
+
+/*
+login flow :
+email/username, password (basic)
+email , password -- data accept --> validation -->
+// first check email exist or not (verify) --> yes --> check password now --> mil0-->
+token generation (jsonwebtoken)
+
+--> now --> not registered
+
+
+
+google login, fb, github (oauth)
+email login (SSO)
+*/
+
+import {Request,Response} from "express"
+import User from "../../../database/models/userModel"
+import bcrypt from "bcrypt"
+import jwt from 'jsonwebtoken'
+class AuthController{
+   static async registerUser(req:Request,res:Response){
+
+    if(req.body == undefined){
+        console.log("triggereed")
+        res.status(400).json({
+            message  : "No data was sent!!"
+        })
+        return
+    }
+    const {username,password,email} = req.body
+    if(!username || !password || !email){
+      res.status(400).json({
+         message : "Please provide username, password, email"
      })
-     .catch((error) => {
-       res.status(500).json({ error: 'Registration failed' });
-     });
- }
-};
-//login flow
-email username pass
-google auth
----> data accept --> validation
-first check if the username/email and password exists
-if exists then check if the password is correct
-// if correct then login the user
-//only password correct then email not correct then return password
-// or username not correct
-
-*/
-
-class AuthController {
-  static async registerUser(req: Request, res: Response) {
-    const { username, email, password } = req.body;
-    if (req.body === undefined || req.body === null) {//
-      return res.status(400).json({ message: 'No data sent' });
+     return
     }
-    // Here you would typically validate the input, hash the password,
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
+//    const [data] =  await User.findAll({
+//         where : {
+//             email
+//         }
+//     })
+//     if(data){
+//         // already exists with that email
+//     }
+     // insert into Users table
+     await User.create({
+         username :username,
+         password : bcrypt.hashSync(password,12), //blowfish
+         email : email
+     })
+     res.status(201).json({
+         message : "User registered successfully"
+     })
+   }
+   static async loginUser(req:Request,res:Response){
+    const {email,password} = req.body
+    if(!email || !password){
+        res.status(400).json({
+            message : "Please provide email,password "
+        })
+        return
     }
-    await User.create({
-      username,
-      email,
-      password: await bcrypt.hashSync(password, 10) // Hash the password before saving
+    // check if email exist or not in our users table
+    const data = await User.findAll({
+        where : {
+            email
+        }
     })
-      .then(() => {
-        res.status(201).json({ message: 'User registered successfully' });
-      })
-      .catch((error) => {
-        res.status(500).json({ error: 'Internal Server Error', details: error });
-      });
-  }
-  static async loginUser(req: Request, res: Response) {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    /*
+    numbers = [1]
+    numbers[0]
+    data = [
+    {
+    email : "manish@gmail.com",
+    username : "manish",
+    password : "jldsjfslkfj3423423"
+    },
+     {
+    email : "manish@gmail.com",
+    username : "manish",
+    haha : "hehe"
     }
-    try {
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-        return res.status(404).json({ message: 'Invalid email or password' });
-      }
-      const isPasswordMatch = await bcrypt.compareSync(password, user.password);
-      if (isPasswordMatch) {
-        // FIX: Use 'id' (lowercase) in JWT payload for consistency with middleware
-        const token = jwt.sign({ id: user.id, username: "Saroj" }, "thisissecret", { expiresIn: '30d' });
-        return res.status(200).json({ token, message: 'Login successful', userId: user.id });
-      } else {
-        return res.status(401).json({ message: 'Invalid email or password' });
-      }
-      // Here you would typically generate a token and send it back
-      // For simplicity, we are just returning a success message
-      // You can use JWT or any other method to handle authentication
-      // const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
-      // res.status(200).json({ message: 'Login successful', token });
-      // For now, we will just return the user ID
-    } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error', details: error });
+    ]
+    data[0].password
+    data[1].haha
+
+
+    */
+    // select * from User where email="manish@gmail.com" AND age = 22
+    if(data.length ==0){
+        res.status(404).json({
+            message : "Not registered!!"
+        })
+    }else{
+        // check password , nepal123 --> hash conversion --> fsdkjfsdfjsd
+        // compare(plain password user bata aako password, hashed password register huda table ma baseko)
+         const isPasswordMatch = bcrypt.compareSync(password,data[0].password)
+         if(isPasswordMatch){
+            // login vayo , token generation
+           const token =  jwt.sign({id :data[0].id},'thisissecret',{
+            expiresIn : "30d"
+           })
+            res.status(200).json({
+                token : token,
+                message : "Logged in success"
+            })
+         }else{
+            res.status(403).json({
+                message : "Invalid email or password"
+            })
+         }
+
     }
-  }
+   }
+
 }
 
-export default AuthController; // Export the class if needed
+
+
+export default AuthController
+
+
+// export  {registerUser}
+
+
+
+// token(jwt), session
+// cookie, localstorage

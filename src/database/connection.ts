@@ -1,4 +1,3 @@
-
 import {Sequelize} from 'sequelize-typescript'
 import { config } from "dotenv";
 config()
@@ -13,7 +12,7 @@ const sequelize = new Sequelize({
     models : [__dirname + '/models'] // current location + '/models'
 })
 
-
+// Only authenticate and sync here, not in server.ts
 sequelize.authenticate()
 .then(()=>{
     console.log("Authenticated, connected")
@@ -29,4 +28,4 @@ sequelize.sync({alter:true})
 })
 
 
-export default sequelize
+export default sequelize;

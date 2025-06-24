@@ -25,7 +25,7 @@ const sendMail = async (mailInformation:IMailInformation)=>{
  })
 
  const mailFormatObject = {
-    from : "Google <google@gmail.com>",
+    from : "Ed-Tech <edtechsaas@gmail.com>",
     to : mailInformation.to,
     subject : mailInformation.subject,
     html : mailInformation.text

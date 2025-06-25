@@ -5,6 +5,7 @@ import { QueryTypes } from "sequelize";
 import generateRandomPassword from "../../../services/generateRandomPassword";
 import sendMail from "../../../services/sendMail";
 
+
 const createTeacher = async(req:IExtendedRequest,res:Response)=>{
     // teacher ko k k data chayenxa tyo accept garam
     const instituteNumber = req.user?.currentInstituteNumber ;
@@ -36,7 +37,7 @@ const createTeacher = async(req:IExtendedRequest,res:Response)=>{
     const mailInformation = {
         to : teacherEmail,
         subject : "Welcome to our saas MERN project",
-        text : `Welcome xa hai, <b>Email</b> : ${teacherEmail}, Password : ${data.plainVersion}`
+        text : `Welcome xa hai, <b>Email</b> : ${teacherEmail}, Password : ${data.plainVersion}, Your Institute Number : ${instituteNumber}`
     }
     await sendMail(mailInformation)
 

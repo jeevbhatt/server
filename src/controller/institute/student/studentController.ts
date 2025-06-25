@@ -1,6 +1,7 @@
 import { Response } from "express";
 import sequelize from "../../../database/connection";
 import { IExtendedRequest } from "../../../middleware/type";
+import { QueryTypes } from "sequelize";
 
 
 
@@ -12,18 +13,38 @@ const getStudents = async (req:IExtendedRequest,res:Response)=>{
         data : students
     })
 }
+
 // Create a new student
 const createStudent = async (req: IExtendedRequest, res: Response) => {
     const instituteNumber = req.user?.currentInstituteNumber;
-    const { name, email, rollNumber } = req.body;
-    if (!name || !email || !rollNumber) {
-        return res.status(400).json({ message: "Missing required fields" });
+    const { studentName, studentPhoneNo, studentAddress, enrolledDate, studentImage } = req.body;
+    const studentImg = req.file ? req.file.path : (studentImage || "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg");
+    if (!studentName || !studentPhoneNo || !studentAddress || !enrolledDate) {
+        return res.status(400).json({
+            message: "Enter studentName, studentEmail, studentPhoneNo, studentAddress, enrolledDate, studentImage"
+        });
     }
-    const [result] = await sequelize.query(
-        `INSERT INTO student_${instituteNumber} (name, email, rollNumber) VALUES (?, ?, ?)`,
-        { replacements: [name, email, rollNumber] }
-    );
-    res.status(201).json({ message: "Student created", data: result });
+    try {
+        await sequelize.query(
+            `INSERT INTO student_${instituteNumber} (studentName, studentPhoneNo, studentAddress, enrolledDate, studentImage) VALUES (?, ?, ?, ?, ?)`,
+            {
+                replacements: [studentName, studentPhoneNo, studentAddress, enrolledDate, studentImg],
+                type: QueryTypes.INSERT
+            }
+        );
+        // Fetch the newly created student to return in response
+        const students: any = await sequelize.query(
+            `SELECT * FROM student_${instituteNumber} WHERE studentPhoneNo = ? ORDER BY createdAt DESC LIMIT 1`,
+            {
+                replacements: [studentPhoneNo],
+                type: QueryTypes.SELECT
+            }
+        );
+        res.status(201).json({ message: "Student created", data: students[0] });
+    } catch (err: any) {
+        console.error('Error inserting student:', err);
+        res.status(500).json({ message: 'Error creating student', error: err.message });
+    }
 };
 
 // Get all students

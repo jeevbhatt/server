@@ -1,14 +1,22 @@
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
-const generateRandomPassword = (teacherName:string)=>{
-    const randomNumber = Math.floor(1000 + Math.random() * 90000)
-    const passwordData = {
-        hashedVersion : bcrypt.hashSync(`${randomNumber}_${teacherName}`,10), // table ma store garna ko lagi
-        plainVersion : `${randomNumber}_${teacherName}` // teacher lai mail ma sent garna ko lagi
-    }
+/**
+ * Generates a secure random password for a teacher, hashes it, and returns both versions.
+ * Uses cryptographically secure random bytes and includes the teacher's name for uniqueness.
+ */
+const generateRandomPassword = (teacherName: string) => {
+    // Generate a secure random 5-digit number
+    const randomNumber = randomBytes(3).readUIntBE(0, 3) % 90000 + 10000;
+    // Combine with teacher name for the plain password
+    const plainVersion = `${randomNumber}_${teacherName}`;
+    // Hash the password with bcrypt
+    const hashedVersion = bcrypt.hashSync(plainVersion, 10);
 
-    return passwordData
-}
+    return {
+        hashedVersion, // Store in DB
+        plainVersion   // Send to teacher via email
+    };
+};
 
-
-export default generateRandomPassword
+export default generateRandomPassword;

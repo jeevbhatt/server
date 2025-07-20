@@ -4,6 +4,7 @@ import generateRandomInsituteNumber from "../../services/generateRandomInsituteN
 import { IExtendedRequest } from "../../middleware/type";
 import User from "../../database/models/userModel";
 import categories from "../../seed";
+import { QueryTypes } from "sequelize";
 
 
 
@@ -171,6 +172,22 @@ const createCategoryTable = async(req:IExtendedRequest,res:Response,next:NextFun
 
 }
 
+const getAllInstitutes = async (req:IExtendedRequest,res:Response)=>{
+    try {
+        const institutes = await sequelize.query(`SELECT * FROM institute_${req.user?.currentInstituteNumber}`,{
+            type : QueryTypes.SELECT
+        })
+        res.status(200).json({
+            message : "Institutes fetched successfully",
+            data : institutes
+        })
+    } catch (error) {
+        console.log('Error fetching institutes:', error);
+        res.status(500).json({
+            message : "Error fetching institutes",
+            error: error instanceof Error ? error.message : 'Unknown error'
+        })
+    }
+}
 
-
-export  {createInstitute,createTeacherTable,createStudentTable,createCourseTable,createCategoryTable}
+export  {createInstitute,createTeacherTable,createStudentTable,createCourseTable,createCategoryTable, getAllInstitutes};

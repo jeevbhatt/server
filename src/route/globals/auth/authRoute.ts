@@ -5,11 +5,11 @@ import{ Request, Response } from 'express';
 const router: Router = express.Router();
 
 // Wrap async controller to handle errors
-router.route('/register')
+router.route('/auth/register')
   .post((req: Request, res: Response) => {
     AuthController.registerUser(req, res);
   });
-router.route("/login").post((req: Request, res: Response) => {
+router.route("/auth/login").post((req: Request, res: Response) => {
   AuthController.loginUser(req, res);
 });
 
